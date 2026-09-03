@@ -1,0 +1,47 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pgc"
+version = "2.0.0"
+description = "Protocol-Governed Computing — installs the full toolchain and reports whether an environment is ready to compile, seal, and execute"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "Apache-2.0"
+authors = [{ name = "Bhash Ganti", email = "bachipeachy@gmail.com" }]
+
+keywords = ["protocol-governed-computing", "pgc", "governance", "authorization", "sdlc"]
+
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "Programming Language :: Python :: 3",
+  "Operating System :: OS Independent",
+  "Topic :: Software Development :: Compilers",
+]
+
+# The whole family, pinned to one composition. PGC versions the composition:
+# the repos release together and the governance closure forces lockstep, so a
+# mixed-version install is not a supported configuration.
+dependencies = [
+  "pgc-compiler==2.0.0",
+  "pgc-assembler==2.0.0",
+  "pgc-runtime==2.0.0",
+  "pgc-inspector==2.0.0",
+  "pgc-transformation==2.0.0",
+  "pgc-governance==2.0.0",
+  "pgc-workloads==2.0.0",
+]
+
+[project.scripts]
+pgc = "pgc.cli:main"
+
+[project.urls]
+Homepage = "https://omnibachi.org/"
+Repository = "https://github.com/protocol-governed-computing"
+Standard = "https://doi.org/10.5281/zenodo.22150616"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["pgc*"]
