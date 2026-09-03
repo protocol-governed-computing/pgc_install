@@ -23,6 +23,7 @@ FAMILY = [
     ("pgc-transformation", "change request → protocol artifacts"),
     ("pgc-governance", "governance surface implementations"),
     ("pgc-workloads", "conformance workload implementations"),
+    ("pgc-domains", "business domain implementations"),
 ]
 
 STANDARD = "https://doi.org/10.5281/zenodo.22150616"

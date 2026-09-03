@@ -32,6 +32,7 @@ dependencies = [
   "pgc-transformation==2.0.0",
   "pgc-governance==2.0.0",
   "pgc-workloads==2.0.0",
+  "pgc-domains==2.0.0",
 ]
 
 [project.scripts]

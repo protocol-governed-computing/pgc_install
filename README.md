@@ -38,6 +38,7 @@ pgc            # reports what is installed and whether the anchor resolves
 | `pgc-transformation` | change request → protocol artifacts |
 | `pgc-governance` | the governance surface and its capability implementations |
 | `pgc-workloads` | the workloads that make conformance observable |
+| `pgc-domains` | the business domain implementations the composed snapshot binds |
 
 **Versioning.** Two schemes. Each repository's `VERSION` is a monotonic composition ordinal —
 internal build accounting, tagged `release-<N>`, never published. `PUBLIC_VERSION` is the platform's
