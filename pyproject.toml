@@ -3,8 +3,11 @@ requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "pgc"
-version = "2.0.0"
+# PyPI prohibits the distribution name `pgc` outright ("The name 'pgc' isn't allowed"), so the
+# composition takes the full project name. The import package and the console script are unaffected:
+# a user still runs `pgc`.
+name = "protocol-governed-computing"
+version = "3.0.0"
 description = "Protocol-Governed Computing — installs the full toolchain and reports whether an environment is ready to compile, seal, and execute"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -25,15 +28,20 @@ classifiers = [
 # the repos release together and the governance closure forces lockstep, so a
 # mixed-version install is not a supported configuration.
 dependencies = [
-  "pgc-compiler==2.0.0",
-  "pgc-assembler==2.0.0",
-  "pgc-runtime==2.0.0",
-  "pgc-inspector==2.0.0",
-  "pgc-transformation==2.0.0",
-  "pgc-governance==2.0.0",
-  "pgc-workloads==2.0.0",
-  "pgc-domains==2.0.0",
+  "pgc-compiler==3.0.0",
+  "pgc-assembler==3.0.0",
+  "pgc-runtime==3.0.0",
+  "pgc-inspector==3.0.0",
+  "pgc-transformation==3.0.0",
+  "pgc-governance==3.0.0",
+  "pgc-workloads==3.0.0",
+  "pgc-domains==3.0.0",
 ]
+
+# The blockchain domain's capability transforms need Keccak-256, which is optional in pgc-domains
+# for the same reason it is optional there: the core compile path imports none of it.
+[project.optional-dependencies]
+blockchain = ["pgc-domains[blockchain]==3.0.0"]
 
 [project.scripts]
 pgc = "pgc.cli:main"
