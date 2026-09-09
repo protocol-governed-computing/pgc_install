@@ -18,11 +18,8 @@ That brings in the eight component packages of the family, pinned to one composi
 
 ## Two steps, not one
 
-Installing the toolchain is half of a working environment. The compiler resolves the
-governance surface from `PGC_PLATFORM_ROOT` — fail-hard, cwd-independent, zero
-inference — so the **declarations come from a repository you point at, not from a
-wheel**. A registry inside a package would be a second governance surface competing
-with the repository's, and a build could then be governed by a stale copy.
+Installing the toolchain installs the machinery, not the declarations that govern it. PGC reads those declarations from the repository named by `PGC_PLATFORM_ROOT` — fail-hard, cwd-independent, with no inference. The wheel supplies the implementation; the repository supplies the governance surface.
+
 
 ```bash
 git clone https://github.com/protocol-governed-computing/software_governance
@@ -30,8 +27,7 @@ export PGC_PLATFORM_ROOT=$PWD/software_governance
 pgc            # reports what is installed and whether the anchor resolves
 ```
 
-That is enough to compile the platform. It is not enough to assemble or execute a
-snapshot — for that, see the full sequence below.
+These two steps establish the working platform: install the toolchain, then point it at its governance surface. The compiler can now resolve and compile the platform. Assembling and executing a snapshot requires additional repositories and anchors, described below.
 
 ## Installing a working platform
 
@@ -171,16 +167,20 @@ payloads are declarations and live in the cloned repository, not in a wheel.
 
 **Versioning.** Two schemes. Each repository's `VERSION` is a monotonic composition ordinal —
 internal build accounting, tagged `release-<N>`, never published. `PUBLIC_VERSION` is the platform's
-public identity, tagged on every component repository; the platform is at **`v3`**.
+public identity, tagged on every component repository; the platform is at **`v4`**.
 
-**The published version follows the public one: `v3` opens at `3.0.0`.** The family releases in
+**The published version follows the public one: `v4` opens at `4.0.0`.** The family releases in
 lockstep, so the composition pins exact versions rather than ranges.
 
-A public identity may carry more than one published version. Packaging and distribution defects are
-corrected in a patch release within the same identity — `3.0.1` is still `v3` — because such a fix
-changes what a wheel contains, not what the composition is or what it does. Only a change to the
-composition itself takes the next public identity, and only that mints a new DOI. The current
-published version is **`3.0.1`**.
+A public identity may carry more than one published version. A packaging or distribution defect can
+be corrected in a patch release within the same identity, because such a fix changes what a wheel
+contains and not what the composition determines. A change to what the composition determines takes
+the next public identity, and only that mints a new DOI.
+
+`v4` is the second kind. The wheels stopped shipping declarations, which is the first; but an
+identity published by more than one domain now resolves to its authoring copy rather than to
+whichever sorted last, and that changes what the composition answers. A patch release would have
+said otherwise.
 
 The standard these packages implement is a separate artifact on its own track, is not this number,
 and is published separately: https://doi.org/10.5281/zenodo.22150616
