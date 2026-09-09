@@ -14,7 +14,8 @@ pip install protocol-governed-computing
 ```
 
 That brings in the eight component packages of the family, pinned to one composition, and puts
-`pgc` on the path.
+`pgc` on the path. To run the sealed composition a paper cites, rather than build one, see
+[`pgc_release`](https://github.com/protocol-governed-computing/pgc_release).
 
 ## Two steps, not one
 
@@ -28,6 +29,26 @@ pgc            # reports what is installed and whether the anchor resolves
 ```
 
 These two steps establish the working platform: install the toolchain, then point it at its governance surface. The compiler can now resolve and compile the platform. Assembling and executing a snapshot requires additional repositories and anchors, described below.
+
+## Who this is for
+
+Two kinds of work start here, and they diverge after the toolchain is installed.
+
+**Kicking the tires — you want to see the platform build and run.** Clone the declaration
+repositories, compile them, assemble a snapshot, execute a workflow. That is the sequence below,
+unmodified.
+
+**Adding a domain — you trust the platform and want to author against it.** Same sequence, with
+your own domain in place of the shipped ones. See *Adding your own domain*.
+
+A third case is not served here: **verifying the sealed composition a paper cites**. That artifact
+is published separately and needs no build — see
+[`pgc_release`](https://github.com/protocol-governed-computing/pgc_release).
+
+**One thing surprises domain authors, so it is worth saying early.** You must clone
+`software_governance` even though you never modify it. The wheels give you the toolchain *and* the
+platform's capability implementations; they do not give you the governance surface, because
+declarations never ship in a wheel. Trusting the platform does not spare you the clone.
 
 ## Installing a working platform
 
@@ -137,6 +158,109 @@ protocol_runtime run \
 
 `boot` loads and hash-verifies every domain in the manifest before anything executes. The
 payloads are declarations and live in the cloned repository, not in a wheel.
+
+## Adding your own domain
+
+A domain is a directory the compiler is pointed at. It declares what it contributes, compiles against
+the platform's compiled surface, and composes into a snapshot alongside it. You author it; nothing
+generates it for you.
+
+The smallest domain that admits a request, does work, and returns a result is **six files producing
+seventeen artifacts**. `.github/process/domain_authoring.py` builds exactly that from scratch on every
+regression run, so what follows is executed rather than described.
+
+**The shape.**
+
+```
+your_domain/
+  registry/
+    structures/STRUCTURE_BUILD_YOUR_DOMAIN_CONFIG_V0.md   the build manifest
+    <subdomain>/
+      actors/AC_*.md              intents/IN_*.md         workflows/WF_*.md
+      capability_contracts/CC_*.md    capability_transforms/CT_*.md
+  implementation/
+    capability_transforms/atoms/*.py   one module per CT, each exposing execute(inputs, context)
+```
+
+**The build manifest.** Three parts of it are easy to get wrong, and each fails in its own way:
+
+```yaml
+fqdn: your_domain::STRUCTURE_BUILD_YOUR_DOMAIN_CONFIG_V0
+artifact_kind: STRUCTURE
+version: V0
+governed_by: structure::CONSTITUTION_STRUCTURE_V0
+authority: pgc.platform
+concern: your_domain
+structure_scope: your_domain        # names the composed domain — see below
+reuse_visibility: business
+core:
+  summary: Build-time STRUCTURE manifest for the your_domain scope
+layer_definitions:
+  YOUR_DOMAIN:
+    domain_subpath: registry
+    registry_module: your_domain.registry
+    implementation_namespace: your_domain.implementation.capability_transforms.atoms
+    layer_category: domain
+identity_rules:
+- match: your_domain.registry
+  namespace: your_domain
+artifact_discovery:
+  search_layers:
+  - YOUR_DOMAIN
+  import_surface:
+    domain: platform              # compile against the platform's compiled surface
+  artifact_types: [AC, IN, WF, CC, CT]
+output_configuration:
+  artifacts:
+    layer: PROTOCOL_BUILD_ROOT
+    subpath: compiled/canonical
+  vocabulary_projection_path:   {layer: GOVERNANCE, subpath: compiled/vocabulary}
+  tokenized_projection_path:    {layer: GOVERNANCE, subpath: compiled/tokenized}
+  evidence_projection_path:     {layer: GOVERNANCE, subpath: compiled/evidence}
+  trust_attestation_path:       {layer: GOVERNANCE, subpath: compiled/trust}
+  visualization_projection_path: {layer: GOVERNANCE, subpath: compiled/visualization}
+  layer_outputs:
+    YOUR_DOMAIN:
+      layer: YOUR_DOMAIN
+      subpath: compiled/canonical
+```
+
+**All five projection paths are required.** Omitting them does not fail early: the build passes
+discovery, governance and construction and dies at S7 with five `E301_WRITE_FAILED` errors naming
+each missing path. It reads like a compiler fault and is a missing declaration.
+
+**`structure_scope` names the composed domain**, not `layer_category` and not the namespace. Set it
+to something generic and the snapshot composes a domain literally called that — the assembly
+succeeds, conformance passes, and the domain is simply wrongly named. Nothing catches it.
+
+**Building it** is step 4 above with your directory in place of a shipped one:
+
+```bash
+PGC_DOMAIN_ROOTS=$PWD/your_domain \
+PGC_SNAPSHOT_ROOT=$PWD/your_domain/snapshot \
+  protocol_compiler compile --structure STRUCTURE_BUILD_YOUR_DOMAIN_CONFIG_V0
+```
+
+Then add `--source $PWD/your_domain/snapshot/compiled` to the assemble in step 5. The platform must
+be compiled first: `import_surface` reads its compiled vocabulary, and a domain cannot compile
+against a surface that does not yet exist.
+
+**Your domain must be importable at execution time.** The compiler reads declarations from the
+filesystem, but the runtime *imports* the module a CT names. If your package is not on the path, the
+workflow does not raise — it returns `VIOLATION` with the transform's outputs null, which looks like
+a failed business rule rather than a missing module. Either `pip install -e your_domain` or:
+
+```bash
+export PYTHONPATH=$PWD
+```
+
+**What you do not need:** `conformance_workloads`. It contributes the collatz workload, which the
+profile in force does not require — verified by building this path without it. You still need
+`software_governance` for the declarations and `snapshot_inspector` for the inspection domain the
+profile does require.
+
+**A profile permits more than it requires.** Composing your domain alongside the platform does not
+violate the claimed profile: a snapshot may carry more than a profile requires and still conform.
 
 ## Known rough edges
 
