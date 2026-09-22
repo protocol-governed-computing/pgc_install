@@ -79,6 +79,24 @@ git clone https://github.com/protocol-governed-computing/.github pgc_github
 `.github` carries the snapshot profiles, which are conformance contracts rather than
 code and are not published in any wheel.
 
+A **fifth** clone is needed only to reach the platform over HTTP (§7), and only on
+whichever node serves the boundary:
+
+```bash
+git clone https://github.com/protocol-governed-computing/protocol_transport
+```
+
+`protocol_transport` is deliberately not published. It provisions its import roots —
+`adapters` and `resolver` — from its repository root rather than from an installed
+package, so the boundary is composed by whoever deploys it rather than carried into
+every install. Steps 4 through 6 need none of it.
+
+**Pin what you clone.** These commands fetch the default branch, which moves. A wheel at
+one version against declarations from a later branch is an incoherence nothing reports:
+the implementations are one composition's and the declarations another's. Clone
+`--branch <tag>` at the release matching your toolchain — `v4` for `4.0.0` — whenever the
+build has to be reproducible.
+
 ### 3. The anchors
 
 Six environment variables govern where the toolchain reads and writes.
@@ -115,13 +133,18 @@ Then each domain, into its own output root:
 
 ```bash
 PGC_DOMAIN_ROOTS=$PWD/conformance_workloads/workloads/collatz \
-PGC_SNAPSHOT_ROOT=$PWD/workload_snapshot \
+PGC_SNAPSHOT_ROOT=$PWD/conformance_workloads/workloads/collatz/snapshot \
   protocol_compiler compile --structure STRUCTURE_BUILD_WORKLOAD_CONFIG_V0
 
 PGC_DOMAIN_ROOTS=$PWD/snapshot_inspector \
-PGC_SNAPSHOT_ROOT=$PWD/inspection_snapshot \
+PGC_SNAPSHOT_ROOT=$PWD/snapshot_inspector/snapshot \
   protocol_compiler compile --structure STRUCTURE_BUILD_INSPECTION_CONFIG_V0
 ```
+
+Each domain writes into its own repository's `snapshot/`, which is where the platform
+already wrote its own and which every one of these repositories gitignores. Output
+directories of your own choosing work equally well; keeping them domain-local means a
+checkout pinned to a tag stays clean, and it is one convention rather than two.
 
 Each run reports its stages, artifact count, and whether the result verified and attested.
 
@@ -158,6 +181,50 @@ protocol_runtime run \
 
 `boot` loads and hash-verifies every domain in the manifest before anything executes. The
 payloads are declarations and live in the cloned repository, not in a wheel.
+
+`boot` also reads `PGC_SNAPSHOT_PROFILES`, exported in §5. A sealed snapshot's profile claim was
+evaluated when it was sealed, so booting one should not need the profile root — today it does, and
+reports an error before proceeding if the anchor is unset.
+
+### 7. Reach it over HTTP
+
+Steps 1 through 6 execute through the CLI. The interaction boundary is a separate surface, and two
+of the cloned repositories ship a client for it: `conformance_workloads/workloads/collatz/client`
+submits work, and `snapshot_inspector/client` reads the snapshot. Each carries its own `web/`, a
+`bindings/http.json` naming which operations are reachable at which route, and a `serve.sh`.
+
+**Those `serve.sh` scripts assume a development checkout**, where `runtime`, `inspector` and
+`assembler` are sibling repository roots on `PYTHONPATH`. Here they are installed packages, so the
+roots point at site-packages instead. `protocol_transport` is the exception, and is genuinely a
+repository root because it is unpublished.
+
+```bash
+SP=$(python3 -c 'import site; print(site.getsitepackages()[0])')
+CLIENT=$PWD/conformance_workloads/workloads/collatz/client
+
+PGC_RUNTIME_ROOT=$SP PGC_INSPECTOR_ROOT=$SP PGC_ASSEMBLER_ROOT=$SP PGC_IMPL_ROOTS=$SP \
+PGC_SNAPSHOT_ROOT=$PWD/snapshot \
+PGC_DATA_ROOT=$PWD/data/collatz \
+PGC_HTTP_BINDINGS=$CLIENT/bindings/http.json \
+PGC_STATIC_MOUNTS="/=$CLIENT/web;/snapshot=$PWD/snapshot" \
+PGC_HTTP_PORT=8000 \
+  $PWD/protocol_transport/run_http.sh
+```
+
+Substitute `$PWD/snapshot_inspector/client` and another port for the read surface. Then:
+
+```bash
+curl -s -X POST http://localhost:8000/collatz -d '{"number":27}'
+curl -s -X POST http://localhost:8001/si -d '{"operation":"si.snapshot.validate"}'
+```
+
+The read surface routes every `si.*` operation through one binding, named in the request body
+rather than in the path. The boundary reads its bindings once, at startup: restart it after any
+rebuild.
+
+`run_http.sh` launches `python3`, which is the virtual environment's interpreter while §1's
+environment is active. Set `PYTHON` to an absolute path if you invoke this without activating it —
+not to `$(command -v python)`, which returns an alias rather than a path under some shells.
 
 ## Adding your own domain
 
@@ -275,6 +342,17 @@ violate the claimed profile: a snapshot may carry more than a profile requires a
 - **`pgc` reports readiness for the platform compile only.** It reads three anchors and
   reports "Ready" once the governance surface resolves; assembly and execution need the
   other three.
+- **`protocol_runtime boot` requires `PGC_SNAPSHOT_PROFILES`.** A sealed snapshot carries its
+  profile claim, and that claim was evaluated when the snapshot was sealed, so booting it should
+  not need the profile root. Unset, `boot` prints an error and then proceeds and succeeds. The
+  sequence above exports it in §5, so §6 inherits it — which makes the ordering load-bearing
+  rather than incidental.
+- **`--data-root` rejects a relative path.** `$PWD/data` above is absolute and passes. A bare
+  `data` does not, which will surface first in whatever script wraps this.
+- **No serving path is published for an installed platform.** Both clients' `serve.sh` resolve
+  `runtime`, `inspector` and `assembler` from sibling repository roots, which exist in a
+  development checkout and not in an install. §7 gives the equivalent invocation; nothing in any
+  repository does.
 
 ## The family
 
