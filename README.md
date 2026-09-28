@@ -335,6 +335,12 @@ violate the claimed profile: a snapshot may carry more than a profile requires a
   config requires a layer the resolver does not map, and `--all-structures` additionally
   names domain structures that are not part of the governance surface. Compile
   `STRUCTURE_BUILD_PLATFORM_CONFIG_V1` by name.
+- **A successful compile may end with `⚠ Machine-block health: N candidate unconsumed key(s)`.**
+  It is expected, and it is not a failure: the build has already verified and attested by the
+  time it prints. It is a heuristic run after the build. For each artifact kind that no schema
+  closes, it looks for machine-block keys whose names appear nowhere in the compiler's source. A
+  key it lists is a *candidate* for a declaration nothing reads, not proof of one. `--verbose`
+  shows the keys.
 - **`PGC_BUILD_ROOT` is inert.** It is accepted and reported, and nothing reads it.
   `PGC_SNAPSHOT_ROOT` is the anchor that controls compiled output.
 - **`PGC_SNAPSHOT_ROOT` carries two meanings** — compiled output to the compiler, assembled
