@@ -99,14 +99,14 @@ build has to be reproducible.
 
 ### 3. The anchors
 
-Six environment variables govern where the toolchain reads and writes.
+Five environment variables govern where the toolchain reads and writes. Where the compiler
+writes is not one of them.
 
 | Anchor | Read by | Meaning |
 |---|---|---|
 | `PGC_PLATFORM_ROOT` | compiler | the governance repository — the directory containing `registry/` |
 | `PGC_DOMAIN_ROOTS` | compiler | the domain being compiled — the directory containing `registry/structures/` |
-| `PGC_SNAPSHOT_ROOT` | compiler | where compiled projections are written |
-| `PGC_SNAPSHOT_ROOT` | runtime | the assembled snapshot to execute — a different meaning; prefer `--snapshot` |
+| `PGC_SNAPSHOT_ROOT` | runtime | the assembled snapshot to execute; prefer `--snapshot` |
 | `PGC_SNAPSHOT_PROFILES` | assembler | the directory holding snapshot profiles |
 | `PGC_DATA_ROOT` | runtime | side-effect state and traces — or pass `--data-root` |
 
@@ -115,9 +115,12 @@ the repository above it. For `conformance_workloads` that is the workload direct
 (`workloads/collatz`); for `snapshot_inspector` it is the repository root. Pointing it one
 level too high is silent — the build config is simply never found.
 
-`PGC_SNAPSHOT_ROOT` must differ for each domain build. Every layer's output consolidates
-into one snapshot root, and verification rejects any file in that root the current build
-did not declare. Two domains sharing a root cannot both verify.
+**Where a build writes is declared, not supplied.** Each build configuration names its root in
+`output_configuration.root`, resolved inside the repository that declares it, and every layer's
+output consolidates there. Every shipped configuration declares `snapshot`, so each domain writes
+into its own repository's `snapshot/`. Two in-force configurations of one repository naming the
+same root are refused, and a configuration naming none cannot be built. The compiler does not read
+`PGC_SNAPSHOT_ROOT`.
 
 ### 4. Compile each domain
 
@@ -126,25 +129,21 @@ read from `$PGC_PLATFORM_ROOT/snapshot` regardless of where output is being writ
 
 ```bash
 export PGC_PLATFORM_ROOT=$PWD/software_governance
-protocol_compiler compile --structure STRUCTURE_BUILD_PLATFORM_CONFIG_V1
+protocol_compiler compile --structure STRUCTURE_BUILD_PLATFORM_CONFIG_V2
 ```
 
-Then each domain, into its own output root:
+Then each domain, into the root its build configuration declares:
 
 ```bash
 PGC_DOMAIN_ROOTS=$PWD/conformance_workloads/workloads/collatz \
-PGC_SNAPSHOT_ROOT=$PWD/conformance_workloads/workloads/collatz/snapshot \
   protocol_compiler compile --structure STRUCTURE_BUILD_WORKLOAD_CONFIG_V0
 
 PGC_DOMAIN_ROOTS=$PWD/snapshot_inspector \
-PGC_SNAPSHOT_ROOT=$PWD/snapshot_inspector/snapshot \
   protocol_compiler compile --structure STRUCTURE_BUILD_INSPECTION_CONFIG_V0
 ```
 
 Each domain writes into its own repository's `snapshot/`, which is where the platform
-already wrote its own and which every one of these repositories gitignores. Output
-directories of your own choosing work equally well; keeping them domain-local means a
-checkout pinned to a tag stays clean, and it is one convention rather than two.
+already wrote its own and which every one of these repositories gitignores.
 
 Each run reports its stages, artifact count, and whether the result verified and attested.
 
@@ -158,8 +157,8 @@ export PGC_SNAPSHOT_PROFILES=$PWD/pgc_github/snapshot_profiles
 
 snapshot_assembler assemble \
   --source $PWD/software_governance/snapshot/compiled \
-  --source $PWD/workload_snapshot/compiled \
-  --source $PWD/inspection_snapshot/compiled \
+  --source $PWD/conformance_workloads/workloads/collatz/snapshot/compiled \
+  --source $PWD/snapshot_inspector/snapshot/compiled \
   --out $PWD/snapshot \
   --profile GOVERNANCE_SURFACE_PROFILE_V0
 ```
@@ -278,6 +277,7 @@ artifact_discovery:
     domain: platform              # compile against the platform's compiled surface
   artifact_types: [AC, IN, WF, CC, CT]
 output_configuration:
+  root: snapshot                # where this build writes, inside your_domain
   artifacts:
     layer: PROTOCOL_BUILD_ROOT
     subpath: compiled/canonical
@@ -292,7 +292,8 @@ output_configuration:
       subpath: compiled/canonical
 ```
 
-**All five projection paths are required.** Omitting them does not fail early: the build passes
+**`root` and all five projection paths are required.** A configuration without `root` is refused
+before anything is compiled. Omitting them does not fail early: the build passes
 discovery, governance and construction and dies at S7 with five `E301_WRITE_FAILED` errors naming
 each missing path. It reads like a compiler fault and is a missing declaration.
 
@@ -304,7 +305,6 @@ succeeds, conformance passes, and the domain is simply wrongly named. Nothing ca
 
 ```bash
 PGC_DOMAIN_ROOTS=$PWD/your_domain \
-PGC_SNAPSHOT_ROOT=$PWD/your_domain/snapshot \
   protocol_compiler compile --structure STRUCTURE_BUILD_YOUR_DOMAIN_CONFIG_V0
 ```
 
@@ -331,10 +331,6 @@ violate the claimed profile: a snapshot may carry more than a profile requires a
 
 ## Known rough edges
 
-- **`--all-structures` and `STRUCTURE_BUILD_PLATFORM_CONFIG_V0` do not build.** The `_V0`
-  config requires a layer the resolver does not map, and `--all-structures` additionally
-  names domain structures that are not part of the governance surface. Compile
-  `STRUCTURE_BUILD_PLATFORM_CONFIG_V1` by name.
 - **A successful compile may end with `⚠ Machine-block health: N candidate unconsumed key(s)`.**
   It is expected, and it is not a failure: the build has already verified and attested by the
   time it prints. It is a heuristic run after the build. For each artifact kind that no schema
@@ -342,9 +338,6 @@ violate the claimed profile: a snapshot may carry more than a profile requires a
   key it lists is a *candidate* for a declaration nothing reads, not proof of one. `--verbose`
   shows the keys.
 - **`PGC_BUILD_ROOT` is inert.** It is accepted and reported, and nothing reads it.
-  `PGC_SNAPSHOT_ROOT` is the anchor that controls compiled output.
-- **`PGC_SNAPSHOT_ROOT` carries two meanings** — compiled output to the compiler, assembled
-  snapshot to the runtime. Pass `--snapshot` to the runtime rather than relying on it.
 - **`pgc` reports readiness for the platform compile only.** It reads three anchors and
   reports "Ready" once the governance surface resolves; assembly and execution need the
   other three.
