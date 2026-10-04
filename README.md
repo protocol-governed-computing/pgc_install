@@ -94,7 +94,7 @@ every install. Steps 4 through 6 need none of it.
 **Pin what you clone.** These commands fetch the default branch, which moves. A wheel at
 one version against declarations from a later branch is an incoherence nothing reports:
 the implementations are one composition's and the declarations another's. Clone
-`--branch <tag>` at the release matching your toolchain — `v4` for `4.0.0` — whenever the
+`--branch <tag>` at the release matching your toolchain — `v5` for `5.0.0` — whenever the
 build has to be reproducible.
 
 ### 3. The anchors
@@ -368,9 +368,9 @@ violate the claimed profile: a snapshot may carry more than a profile requires a
 
 **Versioning.** Two schemes. Each repository's `VERSION` is a monotonic composition ordinal —
 internal build accounting, tagged `release-<N>`, never published. `PUBLIC_VERSION` is the platform's
-public identity, tagged on every component repository; the platform is at **`v4`**.
+public identity, tagged on every component repository; the platform is at **`v5`**.
 
-**The published version follows the public one: `v4` opens at `4.0.0`.** The family releases in
+**The published version follows the public one: `v5` opens at `5.0.0`.** The family releases in
 lockstep, so the composition pins exact versions rather than ranges.
 
 A public identity may carry more than one published version. A packaging or distribution defect can
@@ -378,10 +378,10 @@ be corrected in a patch release within the same identity, because such a fix cha
 contains and not what the composition determines. A change to what the composition determines takes
 the next public identity, and only that mints a new DOI.
 
-`v4` is the second kind. The wheels stopped shipping declarations, which is the first; but an
-identity published by more than one domain now resolves to its authoring copy rather than to
-whichever sorted last, and that changes what the composition answers. A patch release would have
-said otherwise.
+`v5` is the second kind. The snapshot identity now covers the claimed profile's content, so
+acceptance refuses a profile changed after sealing, and refuses every snapshot sealed before `v5`.
+A superseded artifact no longer confers effect. Both change what the composition admits, and a patch
+release would have said otherwise.
 
 The standard these packages implement is a separate artifact on its own track, is not this number,
 and is published separately: https://doi.org/10.5281/zenodo.22150616
