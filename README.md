@@ -2,6 +2,69 @@
 
 **Protocol-Governed Computing — the whole toolchain in one install.**
 
+## Five minutes: install, run, refuse, tamper
+
+This tour runs the sealed `v5` snapshot. It needs Python 3.12 and git, and builds nothing. You will
+see a governed system do four things: verify itself, run declared behavior, refuse undeclared input,
+and refuse to boot after one byte changes.
+
+```bash
+# 1. Install the toolchain
+python3.12 -m venv .venv && source .venv/bin/activate
+pip install protocol-governed-computing==5.0.0
+
+# 2. Fetch the sealed snapshot and the profile it claims
+git clone -q --depth 1 --branch v5 https://github.com/protocol-governed-computing/pgc_release
+git clone -q --depth 1 --branch v5 https://github.com/protocol-governed-computing/.github pgc_github
+export PGC_SNAPSHOT_PROFILES=$PWD/pgc_github/snapshot_profiles
+SNAP=$PWD/pgc_release/snapshot
+
+# 3. Boot: the runtime rehashes every constituent before anything runs
+protocol_runtime boot --snapshot $SNAP
+
+# 4. Run a declared workflow
+echo '{"numbers": [27]}' > good.json
+protocol_runtime run --wf workload::WF_COLLATZ_CONJECTURE_V0 \
+  --payload $PWD/good.json --snapshot $SNAP --data-root $PWD/data
+
+# 5. Send input the workflow does not admit
+echo '{"numbers": [-5]}' > bad.json
+protocol_runtime run --wf workload::WF_COLLATZ_CONJECTURE_V0 \
+  --payload $PWD/bad.json --snapshot $SNAP --data-root $PWD/data
+
+# 6. Read the trace of that run
+python3 -c 'import json,sys
+for l in open(sys.argv[1]): e=json.loads(l); print(e["event_type"], e.get("step_op") or "")' \
+  "$(ls -t data/traces/workload/WF_COLLATZ_CONJECTURE_V0/*/*.jsonl | head -1)"
+
+# 7. Change one byte in a copy, then boot it
+cp -R $SNAP tampered
+echo " " >> tampered/canonical/platform/metadata.json
+protocol_runtime boot --snapshot $PWD/tampered
+```
+
+**What you should see**
+
+| Step | Result |
+|---|---|
+| 3 | `Snapshot healthy — 8 domain(s) resident and hash-verified` and the snapshot id `f8356d9c…` |
+| 4 | `Status: SUCCESS`, `all_terminate: true`, and the 111-step sequence for 27 |
+| 5 | `Status: VIOLATION`. The runtime refuses input the contract does not admit. It does not guess. |
+| 6 | Nine events, `WF_START` to `WF_COMPLETE`. The first event binds the trace to the snapshot id. |
+| 7 | `Snapshot refused at acceptance: integrity failure at canonical/platform/metadata.json`, with both hashes |
+
+Nothing in the runtime knows what Collatz is. The snapshot declares the workflow, its admission
+rule, and its steps. The runtime executes only what the snapshot declares, and only after the
+snapshot proves it is unchanged.
+
+**Where to go next.** Inspect the snapshot with `si --snapshot $SNAP snapshot summary`. Build a
+platform from source in *Installing a working platform* below. Read what the snapshot claims in
+[`pgc_release`](https://github.com/protocol-governed-computing/pgc_release). Read the standard at
+https://doi.org/10.5281/zenodo.22150616.
+
+**Something failed?** Please [open an issue](https://github.com/protocol-governed-computing/pgc_install/issues)
+with the step number and its output. A failed tour is a defect.
+
 This repository publishes the `protocol-governed-computing` distribution. PyPI prohibits the
 short name `pgc`, so the composition carries the full project name; the command it installs is
 still `pgc`. It is the composition as *installable
