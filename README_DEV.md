@@ -146,17 +146,9 @@ git clone https://github.com/protocol-governed-computing/.github pgc_github
 `.github` carries the snapshot profiles, which are conformance contracts rather than
 code and are not published in any wheel.
 
-A **fifth** clone is needed only to reach the platform over HTTP (§7), and only on
-whichever node serves the boundary:
-
-```bash
-git clone https://github.com/protocol-governed-computing/protocol_transport
-```
-
-`protocol_transport` is deliberately not published. It provisions its import roots —
-`adapters` and `resolver` — from its repository root rather than from an installed
-package, so the boundary is composed by whoever deploys it rather than carried into
-every install. Steps 4 through 6 need none of it.
+The transport boundary needs no clone: `pgc-transport` is part of the install, and its
+`pgc_transport` command reaches the platform from the command line or over HTTP (§7).
+Steps 4 through 6 need none of it.
 
 **Pin what you clone.** These commands fetch the default branch, which moves. A wheel at
 one version against declarations from a later branch is an incoherence nothing reports:
@@ -259,22 +251,19 @@ of the cloned repositories ship a client for it: `conformance_workloads/workload
 submits work, and `snapshot_inspector/client` reads the snapshot. Each carries its own `web/`, a
 `bindings/http.json` naming which operations are reachable at which route, and a `serve.sh`.
 
-**Those `serve.sh` scripts assume a development checkout**, where `runtime`, `inspector` and
-`assembler` are sibling repository roots on `PYTHONPATH`. Here they are installed packages, so the
-roots point at site-packages instead. `protocol_transport` is the exception, and is genuinely a
-repository root because it is unpublished.
+**Those `serve.sh` scripts assume a development checkout**, where every component is a sibling
+repository root. Here they are installed packages, so `pgc_transport http` serves the client
+instead, pointed at the same settings:
 
 ```bash
-SP=$(python3 -c 'import site; print(site.getsitepackages()[0])')
 CLIENT=$PWD/conformance_workloads/workloads/collatz/client
 
-PGC_RUNTIME_ROOT=$SP PGC_INSPECTOR_ROOT=$SP PGC_ASSEMBLER_ROOT=$SP PGC_IMPL_ROOTS=$SP \
 PGC_SNAPSHOT_ROOT=$PWD/snapshot \
 PGC_DATA_ROOT=$PWD/data/collatz \
 PGC_HTTP_BINDINGS=$CLIENT/bindings/http.json \
-PGC_STATIC_MOUNTS="/=$CLIENT/web;/snapshot=$PWD/snapshot" \
+PGC_STATIC_MOUNTS="/=$CLIENT/web;/traces=$PWD/data/collatz/traces;/snapshot=$PWD/snapshot" \
 PGC_HTTP_PORT=8000 \
-  $PWD/protocol_transport/run_http.sh
+  pgc_transport http
 ```
 
 Substitute `$PWD/snapshot_inspector/client` and another port for the read surface. Then:
@@ -284,13 +273,16 @@ curl -s -X POST http://localhost:8000/collatz -d '{"number":27}'
 curl -s -X POST http://localhost:8001/si -d '{"operation":"si.snapshot.validate"}'
 ```
 
+The same requests need no server from the command line:
+
+```bash
+PGC_SNAPSHOT_ROOT=$PWD/snapshot PGC_DATA_ROOT=$PWD/data/collatz \
+  pgc_transport call collatz.compute '{"number": 27}'
+```
+
 The read surface routes every `si.*` operation through one binding, named in the request body
 rather than in the path. The boundary reads its bindings once, at startup: restart it after any
 rebuild.
-
-`run_http.sh` launches `python3`, which is the virtual environment's interpreter while §1's
-environment is active. Set `PYTHON` to an absolute path if you invoke this without activating it —
-not to `$(command -v python)`, which returns an alias rather than a path under some shells.
 
 ## Adding your own domain
 

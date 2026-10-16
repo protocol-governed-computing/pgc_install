@@ -49,26 +49,33 @@ You need Python 3.10 or later and [pipx](https://pipx.pypa.io). With Homebrew:
 
 ```bash
 brew install pipx
-pipx install protocol-governed-computing-demo
+pipx install --include-deps protocol-governed-computing
+curl -LO https://raw.githubusercontent.com/protocol-governed-computing/pgc_install/main/demo/pgc-demo.sh
 ```
 
-One install brings the runtime, the sealed snapshot and the demo pages. It builds nothing, and it
-writes only to `~/pgc-demo`.
+The first command installs PGC itself: the compiler, the assembler, the runtime, the inspector and
+the transport boundary, each as a command. The second fetches
+[`pgc-demo.sh`](demo/pgc-demo.sh), a short script that runs those commands for you. It adds no
+behavior of its own, so you can read it to see exactly what each step below runs.
+
+On first use the script downloads the published release it names: the sealed snapshot, the web
+pages and the declarations. It writes only to `~/pgc-demo`.
 
 ### 1. Play in your browser
 
 ```bash
-pgc-demo collatz
+bash pgc-demo.sh collatz
 ```
 
-Your browser opens the game. Enter **27** and press *Run*. The page shows the 111-step sequence and
-confirms that the number reached 1. Try a few of your own. Large odd numbers often climb surprisingly
-high before they fall.
+Your browser opens the game. Enter **27** and press *Compute Sequence*. The page shows the 111-step
+sequence, its peak of 9,232, and the trace the run left. Try a few of your own. Large odd numbers
+often climb surprisingly high before they fall.
 
 ### 2. See the path the run took
 
 Below the result, the page draws the workflow the snapshot declares, and it marks the steps your run
-took. A run follows only paths the snapshot declares. It can take no other.
+took. It reads them from the run's trace. A run follows only paths the snapshot declares. It can
+take no other.
 
 ### 3. Try to break it
 
@@ -87,17 +94,19 @@ The page does not check your input first. The governed boundary does.
 ### 4. Do the same from the terminal
 
 ```bash
-pgc-demo collatz 27
-pgc-demo collatz -5
+bash pgc-demo.sh collatz 27
+bash pgc-demo.sh collatz -5
 ```
 
-The first prints the sequence. The second prints the refusal and its reason. The terminal and the
-browser reach the same snapshot through the same boundary, and they get the same answers.
+Each prints the boundary's response exactly as the page received it. The first holds the sequence,
+its steps and its peak, and names its trace. The second holds the refusal and its reason. The
+terminal and the browser reach the same snapshot through the same boundary, and they get the same
+answers. Under the script, both run `pgc_transport`, PGC's own command for the boundary.
 
 ### 5. See what the demo recorded
 
 ```bash
-pgc-demo where
+bash pgc-demo.sh where
 ```
 
 This opens `~/pgc-demo`. Each run you made has a trace there, one line per event. The first event
@@ -108,8 +117,8 @@ names the snapshot that governed the run. The last records how the run ended.
 Press `Ctrl-C` to stop the game. To remove everything:
 
 ```bash
-pipx uninstall protocol-governed-computing-demo
-rm -rf ~/pgc-demo
+pipx uninstall protocol-governed-computing
+rm -rf ~/pgc-demo pgc-demo.sh
 ```
 
 ### What just happened
@@ -130,10 +139,10 @@ without touching any code.
 ### Open the inspector
 
 ```bash
-pgc-demo inspect
+bash pgc-demo.sh inspect
 ```
 
-Your browser opens the **snapshot inspector**. It reads the sealed snapshot that ran your games in
+Your browser opens the **snapshot inspector**, at its workflow map. It reads the sealed snapshot that ran your games in
 Demo 1. It can only read. Nothing you do here changes the snapshot.
 
 ### 1. Start from the map
@@ -141,9 +150,9 @@ Demo 1. It can only read. Nothing you do here changes the snapshot.
 The inspector opens on the game's diagram. You saw it in Demo 1:
 
 ```
-  your number ─▶ IN  ─▶ CC compute ─▶ CC verify ─▶ CC store ─▶ EXIT proven
-                 │                                            
-                 └─▶ EXIT rejected        (and EXIT violated, EXIT error)
+your number ─▶ TI entrance ─▶ IN ─▶ CC compute ─▶ CC verify ─▶ CC store ─▶ EXIT proven
+                    │          │                      │
+                 refused   EXIT rejected        EXIT violated       (any CC can also end at EXIT error)
 ```
 
 Each box is a declaration. Its name says what kind it is:
@@ -155,6 +164,7 @@ Each box is a declaration. Its name says what kind it is:
 | `WF` | workflow | the boxes, the order they run in, and every way the run can end |
 | `CC` | contract | one unit of work and the steps inside it |
 | `CT` | transform | one computation, the only place code runs |
+| `CS` | side effect | what a step may read or write, and nothing more |
 | `EXIT` | ending | how a run finishes, and what it announces |
 
 ### 2. Open each box
@@ -162,30 +172,37 @@ Each box is a declaration. Its name says what kind it is:
 Click a box, or run the same question from the terminal:
 
 ```bash
-pgc-demo inspect show IN_COLLATZ_INPUT_VALIDATED_V0
+bash pgc-demo.sh inspect show workload::IN_COLLATZ_INPUT_VALIDATED_V0
 ```
 
-Each box shows its declaration in plain text. Walk the diagram from left to right:
+Each box shows its declaration in plain text. In the terminal, the declaration as written comes
+first, and the form the compiler sealed follows it. Walk the diagram from left to right:
 
-- **The entry point** admits a list of positive whole numbers and nothing else.
-- **Compute** runs one step of the puzzle, over and over, until each number reaches 1.
-- **Verify** confirms every sequence ended at 1. It refuses the run if one did not.
-- **Store** records the results.
+- **The entrance** admits one whole number from 1 to 999,999 and hands it on as a list.
+- **The entry point** admits a non-empty list of positive whole numbers and nothing else.
+- **Compute** works out each number's whole sequence, down to 1.
+- **Verify** checks that every sequence ended at 1. If one did not, the run ends at *violated*.
+- **Store** records the results, and the run ends at *proven*.
+
+Open `CC verify` and you will see it runs version 2 of its contract. The earlier versions are still
+in the snapshot, and version 2 names the one it replaced. A rule changes by a new version, never by
+an edit.
 
 None of these is a program. Each one states what happens. The runtime does what it states.
 
 ### 3. Find the code
 
-Open `CC compute` and follow its step to `CT_PURE_COLLATZ_STEP_V0`. This transform is code. The
-inspector shows the Python module the transform names:
+Open `CC compute` and follow its step to `CT_PURE_COLLATZ_STEP_V0`. This transform is code: it
+names a Python module. Print that module:
 
 ```bash
-pgc-demo inspect code CT_PURE_COLLATZ_STEP_V0
+bash pgc-demo.sh inspect code workloads.collatz.implementation.capability_transforms.atoms.ct_pure_collatz_step_v0
 ```
 
-It is one short function that halves or triples a number. It reads no file, keeps no state, and cannot reach
-the network. The whole game has two such transforms, about 56 lines of Python. Everything else, about
-570 lines, is declaration you can read.
+It is one short function: halve an even number, triple an odd one and add one, until it reaches 1.
+It reads no file, keeps no state, and cannot reach the network. The game has two transforms of its
+own, 56 lines of Python, and verify also reuses one the platform provides. Everything else, about
+490 lines, is declaration you can read.
 
 **That is the separation.** The declarations say what may happen. The code only computes.
 
@@ -194,7 +211,7 @@ the network. The whole game has two such transforms, about 56 lines of Python. E
 In Demo 1, PGC refused 1,000,000. Find the rule that did it:
 
 ```bash
-pgc-demo inspect show TI_COLLATZ_COMPUTE_V0
+bash pgc-demo.sh inspect show workload::TI_COLLATZ_COMPUTE_V0
 ```
 
 The entrance declares `max: 999999`. There is no `if number > 999999` anywhere in the code. The limit is
@@ -202,26 +219,38 @@ a declaration, and you can read it.
 
 ### 5. Change the rule
 
-Raise the limit, or remove it:
+Raise the limit:
 
 ```bash
-pgc-demo collatz set-limit 9999999
+bash pgc-demo.sh collatz set-limit 9999999
 ```
 
-PGC compiles the changed declaration, assembles a new snapshot and seals it. The new snapshot has a
-new identity. Play again:
+This edits one line of the entrance's declaration, `max: 999999`, and nothing else. Then the script
+runs the same build that made the published snapshot: `protocol_compiler`, `protocol_runtime
+conformance` and `snapshot_assembler`. It compiles the declarations, proves the
+transforms, assembles a new snapshot and seals it. The new snapshot has a new identity, and every
+command uses it from now on. The first change takes a few seconds; later ones take about one.
+
+The new snapshot holds only what the game needs: the platform, the game and the inspector. The
+published one also carries business domains the game never touches. Build the same limit twice and
+you get the same identity twice: a snapshot's identity depends on its declarations, not on where or
+when it was built.
+
+If the game page is open, stop it with `Ctrl-C` and start it again. A running page keeps the
+snapshot it started with. Then play again:
 
 ```bash
-pgc-demo collatz 1000000
+bash pgc-demo.sh collatz 1000000
 ```
 
 PGC now admits it. You changed what the game allows, and you did not touch a line of code.
 
 The old snapshot still exists and still refuses 1,000,000. Each snapshot is sealed, and each trace
-names the one that governed it. To go back:
+names the one that governed it. Every snapshot you build is kept in `~/pgc-demo/snapshots`. To go
+back to the published one:
 
 ```bash
-pgc-demo collatz reset
+bash pgc-demo.sh collatz reset
 ```
 
 ### 6. Try to cheat
@@ -229,11 +258,13 @@ pgc-demo collatz reset
 What if you skipped the rebuild and edited the sealed snapshot directly?
 
 ```bash
-pgc-demo collatz tamper
+bash pgc-demo.sh collatz tamper
 ```
 
-This changes one byte in a copy of the sealed snapshot and asks the runtime to start it. The runtime
-refuses, and names the file that changed. A rule changes only through its declaration.
+This copies the sealed snapshot, lowers the limit inside the copy by one, and asks the runtime to
+start it with `protocol_runtime boot`. The runtime refuses before it runs anything. It names the file
+that changed, and shows that its content no longer matches the hash the snapshot was sealed with. A
+rule changes only through its declaration.
 
 ### What just happened
 

@@ -20,6 +20,7 @@ FAMILY = [
     ("pgc-assembler", "projections → sealed snapshot"),
     ("pgc-runtime", "snapshot → governed execution"),
     ("pgc-inspector", "snapshot → read-only inspection"),
+    ("pgc-transport", "requests → the governed boundary (HTTP and command line)"),
     ("pgc-transformation", "change request → protocol artifacts"),
     ("pgc-governance", "governance surface implementations"),
     ("pgc-workloads", "conformance workload implementations"),

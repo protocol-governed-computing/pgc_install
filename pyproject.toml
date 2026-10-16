@@ -32,6 +32,7 @@ dependencies = [
   "pgc-assembler==5.0.0",
   "pgc-runtime==5.0.0",
   "pgc-inspector==5.0.0",
+  "pgc-transport==5.0.0",
   "pgc-transformation==5.0.0",
   "pgc-governance==5.0.0",
   "pgc-workloads==5.0.0",
