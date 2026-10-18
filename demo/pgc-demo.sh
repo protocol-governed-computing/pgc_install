@@ -246,7 +246,7 @@ case "${1:-}" in
     paths
     case "${2:-}" in
       "")        echo "PGC demo — the Collatz game"
-                 serve 8000 "$COLLATZ_CLIENT" /collatz/ "/traces=$DEMO_HOME/traces;/snapshot=$(snapshot)" ;;
+                 serve 8000 "$COLLATZ_CLIENT" /collatz/ "/traces=$DEMO_HOME/traces;/snapshot=$(snapshot);/diagram=$INSPECTION_CLIENT/web/workflow/js" ;;
       set-limit) [ $# -eq 3 ] || usage; set_limit "$3" ;;
       reset)     [ $# -eq 2 ] || usage; reset ;;
       tamper)    [ $# -eq 2 ] || usage; tamper ;;

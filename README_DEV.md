@@ -261,7 +261,7 @@ CLIENT=$PWD/conformance_workloads/workloads/collatz/client
 PGC_SNAPSHOT_ROOT=$PWD/snapshot \
 PGC_DATA_ROOT=$PWD/data/collatz \
 PGC_HTTP_BINDINGS=$CLIENT/bindings/http.json \
-PGC_STATIC_MOUNTS="/=$CLIENT/web;/traces=$PWD/data/collatz/traces;/snapshot=$PWD/snapshot" \
+PGC_STATIC_MOUNTS="/=$CLIENT/web;/traces=$PWD/data/collatz/traces;/snapshot=$PWD/snapshot;/diagram=$PWD/snapshot_inspector/client/web/workflow/js" \
 PGC_HTTP_PORT=8000 \
   pgc_transport http
 ```
