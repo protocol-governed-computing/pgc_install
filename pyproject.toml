@@ -7,7 +7,7 @@ build-backend = "setuptools.build_meta"
 # composition takes the full project name. The import package and the console script are unaffected:
 # a user still runs `pgc`.
 name = "protocol-governed-computing"
-version = "5.0.0"
+version = "6.0.0"
 description = "Protocol-Governed Computing — installs the full toolchain and reports whether an environment is ready to compile, seal, and execute"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -24,25 +24,25 @@ classifiers = [
   "Topic :: Software Development :: Compilers",
 ]
 
-# The whole family, pinned to one composition. PGC versions the composition:
-# the repos release together and the governance closure forces lockstep, so a
-# mixed-version install is not a supported configuration.
+# The whole family, pinned to one composition. `compose_release.py` writes these pins from
+# `pgc_release/composition.json`, the record of which version of each distribution the composition
+# holds. Never edit them by hand.
 dependencies = [
-  "pgc-compiler==5.0.0",
-  "pgc-assembler==5.0.0",
-  "pgc-runtime==5.0.0",
-  "pgc-inspector==5.0.0",
-  "pgc-transport==5.0.0",
-  "pgc-transformation==5.0.0",
-  "pgc-governance==5.0.0",
-  "pgc-workloads==5.0.0",
-  "pgc-domains==5.0.0",
+  "pgc-compiler==6.0.0",
+  "pgc-assembler==6.0.0",
+  "pgc-runtime==6.0.0",
+  "pgc-inspector==6.0.0",
+  "pgc-transport==6.0.0",
+  "pgc-transformation==6.0.0",
+  "pgc-governance==6.0.0",
+  "pgc-workloads==6.0.0",
+  "pgc-domains==6.0.0",
 ]
 
 # The blockchain domain's capability transforms need Keccak-256, which is optional in pgc-domains
 # for the same reason it is optional there: the core compile path imports none of it.
 [project.optional-dependencies]
-blockchain = ["pgc-domains[blockchain]==5.0.0"]
+blockchain = ["pgc-domains[blockchain]==6.0.0"]
 
 [project.scripts]
 pgc = "pgc.cli:main"

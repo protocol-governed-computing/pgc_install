@@ -153,8 +153,8 @@ Steps 4 through 6 need none of it.
 **Pin what you clone.** These commands fetch the default branch, which moves. A wheel at
 one version against declarations from a later branch is an incoherence nothing reports:
 the implementations are one composition's and the declarations another's. Clone
-`--branch <tag>` at the release matching your toolchain — `v5` for `5.0.0` — whenever the
-build has to be reproducible.
+`--branch <tag>` at the composition your toolchain was installed as — `pgc status` names it —
+whenever the build has to be reproducible.
 
 ### 3. The anchors
 
@@ -425,22 +425,19 @@ violate the claimed profile: a snapshot may carry more than a profile requires a
 | `pgc-workloads` | the workloads that make conformance observable |
 | `pgc-domains` | the business domain implementations the composed snapshot binds |
 
-**Versioning.** Two schemes. Each repository's `VERSION` is a monotonic composition ordinal —
-internal build accounting, tagged `release-<N>`, never published. `PUBLIC_VERSION` is the platform's
-public identity, tagged on every component repository; the platform is at **`v5`**.
+**Versioning.** Each distribution carries its own version, and it moves on its own. A release
+that changes a repository bumps that repository's version. A release that leaves it unchanged keeps
+it.
 
-**The published version follows the public one: `v5` opens at `5.0.0`.** The family releases in
-lockstep, so the composition pins exact versions rather than ranges.
+A **composition** is named by its public identity (`v6`, …). `pgc_release/composition.json` records
+which version of each distribution the composition holds, with the snapshot identity. This package
+pins exactly those versions, and `pgc status` reports the composition it was installed as. The
+pins are generated from the record, never edited by hand. Each repository's `VERSION` file holds
+the workspace's cycle ordinal, which is development accounting and is never published.
 
-A public identity may carry more than one published version. A packaging or distribution defect can
-be corrected in a patch release within the same identity, because such a fix changes what a wheel
-contains and not what the composition determines. A change to what the composition determines takes
-the next public identity, and only that mints a new DOI.
-
-`v5` is the second kind. The snapshot identity now covers the claimed profile's content, so
-acceptance refuses a profile changed after sealing, and refuses every snapshot sealed before `v5`.
-A superseded artifact no longer confers effect. Both change what the composition admits, and a patch
-release would have said otherwise.
+A new public identity is issued when what the composition determines changes, and only that mints a
+new DOI. A packaging fix changes what a wheel contains and not what the composition determines, so
+it bumps that one distribution and leaves the identity alone.
 
 The standard these packages implement is a separate artifact on its own track, is not this number,
 and is published separately: https://doi.org/10.5281/zenodo.22150616

@@ -30,6 +30,19 @@ FAMILY = [
 STANDARD = "https://doi.org/10.5281/zenodo.22150616"
 
 
+def _composition() -> tuple[str, str, dict[str, str]] | None:
+    """The composition this distribution was published as, or None for a source install.
+
+    `pgc/composition.py` is generated when a composition is published. A source tree has none, and
+    that is a fact to report rather than an error.
+    """
+    try:
+        from pgc import composition
+    except ImportError:
+        return None
+    return composition.PUBLIC, composition.SNAPSHOT_ID, composition.PINS
+
+
 def _installed() -> list[tuple[str, str, str]]:
     rows = []
     for dist, role in FAMILY:
@@ -66,12 +79,21 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     print("Protocol-Governed Computing\n")
+    composed = _composition()
+    if composed:
+        print(f"  composition {composed[0]}, snapshot {composed[1][:16]}…\n")
+    else:
+        print("  composition: none recorded — this is a source install\n")
+    pins = composed[2] if composed else {}
     print("  toolchain")
-    missing = 0
+    missing = drifted = 0
     for dist, ver, role in _installed():
         if ver == "-":
             missing += 1
-        print(f"    {dist:<20} {ver:<8} {role}")
+        pinned = pins.get(dist)
+        off = pinned is not None and ver not in ("-", pinned)
+        drifted += off
+        print(f"    {dist:<20} {ver:<8} {role}" + (f"  (composition pins {pinned})" if off else ""))
 
     print("\n  environment")
     ready = True
@@ -82,7 +104,7 @@ def main(argv: list[str] | None = None) -> int:
 
     print()
     if missing:
-        print(f"  {missing} package(s) not installed — `pip install pgc` installs the family.")
+        print(f"  {missing} package(s) not installed — `pip install protocol-governed-computing` installs the family.")
     if not ready:
         print("  PGC_PLATFORM_ROOT must point at a governance repository (the directory")
         print("  containing registry/). The declarations are not shipped in any wheel:")
@@ -90,10 +112,12 @@ def main(argv: list[str] | None = None) -> int:
         print("  governs a build rather than a wheel's stale copy competing with a repo.")
         print("\n    git clone https://github.com/protocol-governed-computing/software_governance")
         print("    export PGC_PLATFORM_ROOT=$PWD/software_governance")
-    if not missing and ready:
+    if drifted:
+        print(f"  {drifted} package(s) differ from the composition's pins — this is not {composed[0]}.")
+    if not missing and ready and not drifted:
         print("  Ready: toolchain installed and a governance surface is anchored.")
     print(f"\n  standard: {STANDARD}")
-    return 0 if (ready and not missing) else 1
+    return 0 if (ready and not missing and not drifted) else 1
 
 
 if __name__ == "__main__":
