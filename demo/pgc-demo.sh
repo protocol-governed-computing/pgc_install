@@ -185,7 +185,7 @@ set_limit() {
   echo
 
   [ -d "$BUILD/software_governance/snapshot/compiled" ] ||
-    compile "platform (first build only)" software_governance STRUCTURE_BUILD_PLATFORM_CONFIG_V2
+    compile "platform (first build only)" software_governance STRUCTURE_BUILD_PLATFORM_CONFIG_V0
   [ -d "$BUILD/snapshot_inspector/snapshot/compiled" ] ||
     compile "inspection (first build only)" snapshot_inspector STRUCTURE_BUILD_INSPECTION_CONFIG_V0
   compile "workload" collatz STRUCTURE_BUILD_WORKLOAD_CONFIG_V0

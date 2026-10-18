@@ -188,7 +188,7 @@ read from `$PGC_PLATFORM_ROOT/snapshot` regardless of where output is being writ
 
 ```bash
 export PGC_PLATFORM_ROOT=$PWD/software_governance
-protocol_compiler compile --structure STRUCTURE_BUILD_PLATFORM_CONFIG_V2
+protocol_compiler compile --structure STRUCTURE_BUILD_PLATFORM_CONFIG_V0
 ```
 
 Then each domain, into the root its build configuration declares:
