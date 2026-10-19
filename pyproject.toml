@@ -28,15 +28,15 @@ classifiers = [
 # `pgc_release/composition.json`, the record of which version of each distribution the composition
 # holds. Never edit them by hand.
 dependencies = [
-  "pgc-compiler==6.0.0",
-  "pgc-assembler==6.0.0",
-  "pgc-runtime==6.0.0",
-  "pgc-inspector==6.0.0",
-  "pgc-transport==6.0.0",
-  "pgc-transformation==6.0.0",
   "pgc-governance==6.0.0",
   "pgc-workloads==6.0.0",
   "pgc-domains==6.0.0",
+  "pgc-compiler==6.0.0",
+  "pgc-runtime==6.0.0",
+  "pgc-assembler==6.0.0",
+  "pgc-transport==6.0.0",
+  "pgc-inspector==6.0.0",
+  "pgc-transformation==6.0.0",
 ]
 
 # The blockchain domain's capability transforms need Keccak-256, which is optional in pgc-domains
