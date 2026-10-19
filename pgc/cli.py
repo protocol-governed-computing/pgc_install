@@ -43,6 +43,14 @@ def _composition() -> tuple[str, str, dict[str, str]] | None:
     return composition.PUBLIC, composition.SNAPSHOT_ID, composition.PINS
 
 
+def _own_version() -> str:
+    """This distribution's version. It moves on its own; the composition is named by `PUBLIC`."""
+    try:
+        return md.version("protocol-governed-computing")
+    except md.PackageNotFoundError:
+        return "-"
+
+
 def _installed() -> list[tuple[str, str, str]]:
     rows = []
     for dist, role in FAMILY:
@@ -81,7 +89,8 @@ def main(argv: list[str] | None = None) -> int:
     print("Protocol-Governed Computing\n")
     composed = _composition()
     if composed:
-        print(f"  composition {composed[0]}, snapshot {composed[1][:16]}…\n")
+        print(f"  composition {composed[0]}, snapshot {composed[1][:16]}…")
+        print(f"  installed as protocol-governed-computing {_own_version()}\n")
     else:
         print("  composition: none recorded — this is a source install\n")
     pins = composed[2] if composed else {}

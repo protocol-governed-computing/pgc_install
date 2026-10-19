@@ -7,7 +7,7 @@ build-backend = "setuptools.build_meta"
 # composition takes the full project name. The import package and the console script are unaffected:
 # a user still runs `pgc`.
 name = "protocol-governed-computing"
-version = "6.0.0"
+version = "6.0.1"
 description = "Protocol-Governed Computing — installs the full toolchain and reports whether an environment is ready to compile, seal, and execute"
 readme = "README.md"
 requires-python = ">=3.10"
