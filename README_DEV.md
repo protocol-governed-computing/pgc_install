@@ -8,18 +8,18 @@ first, start with the [demo](https://github.com/protocol-governed-computing/pgc_
 
 ## Five minutes from the command line: install, run, refuse, tamper
 
-This tour runs the sealed `v5` snapshot. It needs Python 3.12 and git, and builds nothing. You will
+This tour runs the sealed `v6` snapshot. It needs Python 3.12 and git, and builds nothing. You will
 see a governed system do four things: verify itself, run declared behavior, refuse undeclared input,
 and refuse to boot after one byte changes.
 
 ```bash
 # 1. Install the toolchain
 python3.12 -m venv .venv && source .venv/bin/activate
-pip install protocol-governed-computing==5.0.0
+pip install protocol-governed-computing==6.0.0
 
 # 2. Fetch the sealed snapshot and the profile it claims
-git clone -q --depth 1 --branch v5 https://github.com/protocol-governed-computing/pgc_release
-git clone -q --depth 1 --branch v5 https://github.com/protocol-governed-computing/.github pgc_github
+git clone -q --depth 1 --branch v6 https://github.com/protocol-governed-computing/pgc_release
+git clone -q --depth 1 --branch v6 https://github.com/protocol-governed-computing/.github pgc_github
 export PGC_SNAPSHOT_PROFILES=$PWD/pgc_github/snapshot_profiles
 SNAP=$PWD/pgc_release/snapshot
 
