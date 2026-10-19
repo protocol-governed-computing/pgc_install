@@ -51,7 +51,7 @@ protocol_runtime boot --snapshot $PWD/tampered
 
 | Step | Result |
 |---|---|
-| 3 | `Snapshot healthy — 8 domain(s) resident and hash-verified` and the snapshot id `f8356d9c…` |
+| 3 | `Snapshot healthy — 8 domain(s) resident and hash-verified` and the snapshot id `13e3c5bb…` |
 | 4 | `Status: SUCCESS`, `all_terminate: true`, and the 111-step sequence for 27 |
 | 5 | `Status: VIOLATION`. The runtime refuses input the contract does not admit. It does not guess. |
 | 6 | Nine events, `WF_START` to `WF_COMPLETE`. The first event binds the trace to the snapshot id. |
@@ -80,7 +80,7 @@ a release is a thing a paper points at; an install is a thing that changes each 
 pip install protocol-governed-computing
 ```
 
-That brings in the eight component packages of the family, pinned to one composition, and puts
+That brings in the nine component packages of the family, pinned to one composition, and puts
 `pgc` on the path. To run the sealed composition a paper cites, rather than build one, see
 [`pgc_release`](https://github.com/protocol-governed-computing/pgc_release).
 
@@ -420,6 +420,7 @@ violate the claimed profile: a snapshot may carry more than a profile requires a
 | `pgc-assembler` | projections → sealed snapshot |
 | `pgc-runtime` | snapshot → governed execution |
 | `pgc-inspector` | snapshot → read-only inspection |
+| `pgc-transport` | the boundary: requests in, results out, over the CLI or HTTP |
 | `pgc-transformation` | change request → protocol artifacts |
 | `pgc-governance` | the governance surface and its capability implementations |
 | `pgc-workloads` | the workloads that make conformance observable |

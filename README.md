@@ -19,7 +19,7 @@ declares, refuses everything else, and records a trace of every run.
 ## This package
 
 This repository publishes `protocol-governed-computing`, the whole toolchain in one install. It
-brings in the eight component packages, pinned to one composition, and puts the `pgc` command on your
+brings in the nine component packages, pinned to one composition, and puts the `pgc` command on your
 path.
 
 ```bash
