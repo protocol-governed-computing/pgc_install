@@ -14,7 +14,7 @@ declares, refuses everything else, and records a trace of every run.
 | See PGC run on your machine in a few minutes | [**Demos**](https://github.com/protocol-governed-computing/pgc_install/blob/main/README_DEMO.md) |
 | Build, run and extend PGC from its parts | [**Developer guide**](https://github.com/protocol-governed-computing/pgc_install/blob/main/README_DEV.md) |
 | Verify the sealed composition a paper cites | [`pgc_release`](https://github.com/protocol-governed-computing/pgc_release) |
-| Read the standard PGC implements | https://doi.org/10.5281/zenodo.22150616 |
+| Read the standard PGC implements | https://doi.org/10.5281/zenodo.22150615 |
 
 ## This package
 

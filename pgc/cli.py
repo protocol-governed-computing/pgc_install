@@ -27,7 +27,7 @@ FAMILY = [
     ("pgc-domains", "business domain implementations"),
 ]
 
-STANDARD = "https://doi.org/10.5281/zenodo.22150616"
+STANDARD = "https://doi.org/10.5281/zenodo.22150615"
 
 
 def _composition() -> tuple[str, str, dict[str, str]] | None:

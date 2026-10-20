@@ -64,7 +64,7 @@ snapshot proves it is unchanged.
 **Where to go next.** Inspect the snapshot with `si --snapshot $SNAP snapshot summary`. Build a
 platform from source in *Installing a working platform* below. Read what the snapshot claims in
 [`pgc_release`](https://github.com/protocol-governed-computing/pgc_release). Read the standard at
-https://doi.org/10.5281/zenodo.22150616.
+https://doi.org/10.5281/zenodo.22150615.
 
 **Something failed?** Please [open an issue](https://github.com/protocol-governed-computing/pgc_install/issues)
 with the step number and its output. A failed tour is a defect.
@@ -441,4 +441,4 @@ new DOI. A packaging fix changes what a wheel contains and not what the composit
 it bumps that one distribution and leaves the identity alone.
 
 The standard these packages implement is a separate artifact on its own track, is not this number,
-and is published separately: https://doi.org/10.5281/zenodo.22150616
+and is published separately: https://doi.org/10.5281/zenodo.22150615
