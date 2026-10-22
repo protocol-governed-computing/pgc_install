@@ -344,7 +344,6 @@ output_configuration:
   tokenized_projection_path:    {layer: GOVERNANCE, subpath: compiled/tokenized}
   evidence_projection_path:     {layer: GOVERNANCE, subpath: compiled/evidence}
   trust_attestation_path:       {layer: GOVERNANCE, subpath: compiled/trust}
-  visualization_projection_path: {layer: GOVERNANCE, subpath: compiled/visualization}
   layer_outputs:
     YOUR_DOMAIN:
       layer: YOUR_DOMAIN
